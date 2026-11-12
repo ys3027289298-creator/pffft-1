@@ -181,3 +181,16 @@ if (PFFFT_USE_TYPE_FLOAT)
   endif()
 
 endif()
+
+######################################################
+
+if (PFFFT_USE_TYPE_FLOAT)
+  add_executable( test_pfstream  test_pfstream.c )
+  target_compile_definitions(test_pfstream PRIVATE _USE_MATH_DEFINES)
+  target_link_libraries( test_pfstream  PFSTREAM ${ASANLIB} ${MATHLIB} )
+
+  add_test(NAME test_pfstream
+    COMMAND test_pfstream
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+endif()

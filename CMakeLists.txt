@@ -303,6 +303,34 @@ if (PFFFT_USE_TYPE_FLOAT)
   endif()
 endif()
 
+######################################################
+
+if (PFFFT_USE_TYPE_FLOAT)
+  # bounded-memory streaming STFT (real-time spectrum), float only
+  add_library(PFSTREAM src/pfstream.c include/pffft/pfstream.h include/pffft/pffft.h )
+  set_target_properties(PFSTREAM PROPERTIES OUTPUT_NAME "pfstream")
+  target_compile_definitions(PFSTREAM PRIVATE _USE_MATH_DEFINES)
+  target_activate_c_compiler_warnings(PFSTREAM)
+  if (PFFFT_USE_DEBUG_ASAN)
+    target_compile_options(PFSTREAM PRIVATE "-fsanitize=address")
+  endif()
+  target_link_libraries( PFSTREAM PFFFT ${ASANLIB} ${MATHLIB} )
+  target_include_directories(PFSTREAM
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/pffft
+  )
+  set_target_properties(PFSTREAM PROPERTIES
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+  )
+  if(NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(PFSTREAM PUBLIC PFSTREAM_STATIC_DEFINE)
+  endif()
+endif()
+
 
 ######################################################
 

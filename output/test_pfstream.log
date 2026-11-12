@@ -1,0 +1,46 @@
+pfstream acceptance: N=64, signal=1000 samples, simd=4 (SSE1)
+
+[1] streaming vs offline whole-signal STFT
+  ok:   every push reports a valid consumed count
+  ok:   all pulls succeed, no sample lost at boundaries
+  ok:   frame indices are contiguous
+  ok:   all frames fit the caller buffer
+  ok:   frame count matches the offline segmentation
+    max abs error = 1.91e-06, mean energy-scaled error = 3.5e-07, analytic bound eps*N*max|x| ~= 4.61e-06
+  ok:   error within analytic bound
+[2] boundaries never break: push granularity independence
+  ok:   every push reports a valid consumed count
+  ok:   all pulls succeed, no sample lost at boundaries
+  ok:   frame indices are contiguous
+  ok:   all frames fit the caller buffer
+  ok:   every push reports a valid consumed count
+  ok:   all pulls succeed, no sample lost at boundaries
+  ok:   frame indices are contiguous
+  ok:   all frames fit the caller buffer
+  ok:   every push reports a valid consumed count
+  ok:   all pulls succeed, no sample lost at boundaries
+  ok:   frame indices are contiguous
+  ok:   all frames fit the caller buffer
+  ok:   all push sizes yield the same frame count
+  ok:   1-sample pushes match 13-sample pushes
+  ok:   1-sample pushes match one-shot push
+  ok:   frame indices identical across push sizes
+  ok:   one-shot push exercised back-pressure
+[3] configuration validation
+  ok:   reject invalid block length
+  ok:   reject zero hop
+  ok:   reject hop larger than block
+  ok:   accept zero overlap (hop == block)
+  ok:   accept max overlap (hop 1)
+[4] memory bounded by four blocks, independent of stream length
+  ok:   stream created
+  ok:   internal data memory is exactly four blocks
+  ok:   fresh stream holds no samples
+  ok:   all marker frames drained
+  ok:   ring occupancy stays below one block after draining
+  ok:   all tail frames drained
+  ok:   stream length grew by an order of magnitude
+  ok:   footprint unchanged after 20x more data
+  ok:   no unbounded sample accumulation
+
+ALL TESTS PASSED: 0 failure(s)

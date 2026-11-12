@@ -118,14 +118,38 @@ and `PFFFT_USE_SCALAR_VECT` are off).
 The PFFASTCONV API is also very simple, just make sure that you read the comments
 in `include/pffft/pffastconv.h`.
 
+### Streaming STFT (real-time spectrum)
+
+`include/pffft/pfstream.h` turns block transforms into a continuous,
+bounded-memory stream for real-time spectrum analysis. The block length
+`N` and the hop size `H` (overlap = `N - H`) are configurable at creation.
+The producer and consumer sides are independent:
+
+* `pffft_stream_push(st, samples, count, &status)` accepts input chunks of
+  any size. Whenever `N` samples are available it applies a periodic Hann
+  window, computes one ordered forward FFT and slides the ring by `H`.
+* `pffft_stream_pull(st, out, &frame_index)` delivers the oldest spectrum as
+  `N/2` interleaved complex bins (`N` floats). When a spectrum is waiting,
+  `push()` returns `PFSTREAM_OUTPUT_FULL` and consumes nothing, so
+  back-pressure never drops a sample and block boundaries never break.
+
+The stream owns exactly four `N`-float buffers (input ring, windowed frame
+that doubles as the in-place FFT input/output, pending spectrum, FFT
+scratch); the window is evaluated while the frame is assembled to stay
+within that budget. Its footprint is therefore `4*N*sizeof(float)` and does
+not grow with the stream length. `test_pfstream` proves that each streamed
+frame matches the offline whole-signal STFT within the analytic floating
+point bound, independently of the push granularity.
+
 
 ## CMake
 
-CMake builds the libraries `PFFFT`, `PFFASTCONV` and `PFDSP` (files
-`libpffft`, `libpffastconv` and `libpfdsp`), static unless `BUILD_SHARED_LIBS`
-is set. PFFASTCONV and PFDSP need `PFFFT_USE_TYPE_FLOAT`. The FFTPACK
-libraries, used for validation, are built only when tests or benchmarks are
-enabled and `PFFFT_USE_FFTPACK` is on.
+CMake builds the libraries `PFFFT`, `PFFASTCONV`, `PFSTREAM` and `PFDSP`
+(files `libpffft`, `libpffastconv`, `libpfstream` and `libpfdsp`), static
+unless `BUILD_SHARED_LIBS` is set. PFFASTCONV, PFSTREAM and PFDSP need
+`PFFFT_USE_TYPE_FLOAT`. The FFTPACK libraries, used for validation, are
+built only when tests or benchmarks are enabled and `PFFFT_USE_FFTPACK`
+is on.
 On Debian/Ubuntu Linux, `sudo apt-get install build-essential cmake` is all
 you need.
 
@@ -248,6 +272,7 @@ target_link_libraries(my_app PRIVATE PFFFT::PFFFT)
 |---|---|
 | `PFFFT::PFFFT` (or `PFFFT`) | FFT library (float and/or double, depending on options) |
 | `PFFASTCONV` | Fast convolution library |
+| `PFSTREAM` | Bounded-memory streaming STFT for real-time spectrum |
 | `PFDSP` | DSP utilities (mixer, carrier generation, CIC filter) |
 
 ### Build control options
